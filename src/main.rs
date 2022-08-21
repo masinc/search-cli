@@ -140,11 +140,7 @@ fn main() -> Result<()> {
         SubCommand::Open(cmd) => exec_open(cmd, config)?,
         SubCommand::Complition(cmd) => exec_complition(cmd, config)?,
         SubCommand::List(cmd) => exec_list(cmd, config)?,
-        SubCommand::External(v) => exec_external(v, config)?, // },
-                                                              // None => {
-                                                              //     //exec_open(cli.open, config)?,
-                                                              //     todo!()
-                                                              // }
+        SubCommand::External(v) => exec_external(v, config)?,
     };
 
     Ok(())
