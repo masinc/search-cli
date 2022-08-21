@@ -47,6 +47,7 @@ pub struct Config {
 pub struct Provider {
     /// The name of the provider
     pub name: String,
+    /// The name aliases
     pub aliases: Option<Vec<String>>,
     /// The URL of the provider
     pub url: String,
