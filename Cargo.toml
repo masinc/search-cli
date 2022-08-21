@@ -1,0 +1,31 @@
+[package]
+name = "search-cli"
+authorss = ["masinc <masinc000@gmail.com>"]
+description = "Cli program to search for arguments words in the browser."
+categories = ["command-line-utilities"]
+keywords = ["cli"]
+license = "MIT OR Apache 2.0"
+version = "0.1.0"
+readme = "README.md"
+edition = "2021"
+
+
+[[bin]]
+name = "search"
+path = "src/main.rs"
+
+[dependencies]
+serde_yaml = "0.9"
+dirs = "4"
+anyhow = "1"
+tera = "1"
+open = "3"
+clap_complete = "3"
+
+[dependencies.clap]
+version = "3"
+features = ["derive"]
+
+[dependencies.serde]
+version = "1"
+features = ["derive"]
