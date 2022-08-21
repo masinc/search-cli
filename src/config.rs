@@ -50,10 +50,6 @@ pub struct Provider {
     pub aliases: Option<Vec<String>>,
     /// The URL of the provider
     pub url: String,
-
-    /// If url_encode is true then the words in the url are URL encoded.
-    /// Default: true
-    pub url_encode: Option<bool>,
 }
 
 pub fn find_provider(providers: &[Provider], name: String) -> Option<&Provider> {
