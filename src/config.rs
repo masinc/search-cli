@@ -50,7 +50,7 @@ pub struct DefaultConfig {
     pub browser: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone, Default)]
 pub struct Provider {
     /// The name of the provider
     pub name: String,
