@@ -169,3 +169,23 @@ fn main() -> Result<()> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_replace_url() {
+        let search_url = "https://google.com/search?q={{ word | urlencode }}";
+
+        assert_eq!(
+            replace_url(search_url, "aaa").unwrap(),
+            "https://google.com/search?q=aaa".to_string()
+        );
+
+        assert_eq!(
+            replace_url(search_url, "aaa bbb").unwrap(),
+            "https://google.com/search?q=aaa%20bbb".to_string()
+        )
+    }
+}
