@@ -68,7 +68,7 @@ fn exec_open(cmd: cli::CommandOpen, config: Config) -> anyhow::Result<()> {
     }
 
     let provider = match cmd.provider {
-        Some(name) => match find_provider(&config.providers, name.clone()) {
+        Some(name) => match find_provider(&config.providers, &name) {
             Some(p) => p,
             None => {
                 eprintln!("The Provider does not exists: '{name}'");

@@ -80,14 +80,14 @@ impl Default for Browser {
     }
 }
 
-pub fn find_provider(providers: &[Provider], name: String) -> Option<&Provider> {
+pub fn find_provider<'a, 'b>(providers: &'a [Provider], name: &'b str) -> Option<&'a Provider> {
     for provider in providers.iter() {
         if provider.name == name {
             return Some(provider);
         }
 
         if let Some(aliases) = &provider.aliases {
-            if aliases.iter().any(|alias| alias == &name) {
+            if aliases.iter().any(|alias| alias == name) {
                 return Some(provider);
             }
         }
