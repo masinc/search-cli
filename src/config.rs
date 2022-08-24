@@ -95,3 +95,27 @@ pub fn find_provider<'a, 'b>(providers: &'a [Provider], name: &'b str) -> Option
 
     None
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_find_provider() {
+        let name = "google";
+        assert_eq!(find_provider(&[], name), None);
+
+        let providers = [Provider {
+            name: "google".into(),
+            ..Default::default()
+        }];
+
+        assert_eq!(
+            find_provider(&providers, name),
+            Some(&Provider {
+                name: "google".into(),
+                ..Default::default()
+            })
+        );
+    }
+}
