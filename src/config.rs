@@ -41,6 +41,13 @@ providers:
 pub struct Config {
     pub version: String,
     pub providers: Vec<Provider>,
+    pub default: Option<DefaultConfig>,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone)]
+pub struct DefaultConfig {
+    /// The default browser path
+    pub browser: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone)]
@@ -51,6 +58,26 @@ pub struct Provider {
     pub aliases: Option<Vec<String>>,
     /// The URL of the provider
     pub url: String,
+    /// Open browser for the provider
+    #[serde(default)]
+    pub browser: Browser,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone)]
+#[serde(untagged)]
+pub enum Browser {
+    /// The default browser
+    Default,
+    /// The default browser settings
+    DefaultConfig,
+    /// The browser path
+    Browser(String),
+}
+
+impl Default for Browser {
+    fn default() -> Self {
+        Self::Default
+    }
 }
 
 pub fn find_provider(providers: &[Provider], name: String) -> Option<&Provider> {
