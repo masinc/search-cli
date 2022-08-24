@@ -1,6 +1,6 @@
 [package]
 name = "search-cli"
-authorss = ["masinc <masinc000@gmail.com>"]
+authors = ["masinc <masinc000@gmail.com>"]
 description = "Cli program to search for arguments words in the browser."
 categories = ["command-line-utilities"]
 keywords = ["cli"]
