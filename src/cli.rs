@@ -22,7 +22,7 @@ pub enum SubCommand {
     Config(CommandConfig),
     List(CommandList),
     Open(CommandOpen),
-    Complition(CommandCompletion),
+    Completion(CommandCompletion),
     #[clap(external_subcommand)]
     External(Vec<String>),
 }
