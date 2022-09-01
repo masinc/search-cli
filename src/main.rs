@@ -50,7 +50,7 @@ fn main() -> Result<()> {
     match cli.subcommand {
         SubCommand::Config(cmd) => exec::config(cmd, config)?,
         SubCommand::Open(cmd) => exec::open(cmd, config)?,
-        SubCommand::Completion(cmd) => exec::complition(cmd, config)?,
+        SubCommand::Completion(cmd) => exec::completion(cmd, config)?,
         SubCommand::List(cmd) => exec::list(cmd, config)?,
         SubCommand::External(v) => exec::external(v, config)?,
     };

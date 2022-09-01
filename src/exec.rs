@@ -85,7 +85,7 @@ pub fn list(cmd: cli::CommandList, config: Config) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub fn complition(cmd: cli::CommandCompletion, _config: Config) -> anyhow::Result<()> {
+pub fn completion(cmd: cli::CommandCompletion, _config: Config) -> anyhow::Result<()> {
     use clap::CommandFactory;
 
     clap_complete::generate(cmd.shell, &mut Cli::command(), "search", &mut io::stdout());
