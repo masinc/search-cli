@@ -44,29 +44,9 @@ pub fn open(cmd: cli::CommandOpen, config: Config) -> anyhow::Result<()> {
 
     let url = replace_url(&provider.url, &cmd.word)?;
 
-    let browser = {
-        use config::Browser;
-        match &provider.browser {
-            Browser::DefaultConfig => match &config.default {
-                Some(default) => match &default.browser {
-                    Some(default_browser) => Browser::Browser(default_browser.clone()),
-                    None => Browser::Default,
-                },
-                None => Browser::Default,
-            },
-            b => b.clone(),
-        }
-    };
-
-    match browser {
-        config::Browser::Default => open::that(url)?,
-        config::Browser::DefaultConfig => {
-            match config.default.and_then(|default| default.browser) {
-                Some(browser) => open::with(url, browser)?,
-                None => open::that(url)?,
-            }
-        }
-        config::Browser::Browser(browser) => open::with(url, browser)?,
+    match &provider.browser {
+        None => open::that(url)?,
+        Some(path) => open::with(url, path)?,
     }
 
     Ok(())

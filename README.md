@@ -57,40 +57,14 @@ An array of [`provider`](#provider)
 
 ## provider
 
-| key                                                           | description                                                                   |
-|---------------------------------------------------------------|-------------------------------------------------------------------------------|
-| name                                                          | Provider Name. This is the name of the command execution.                     |
-| aliases                                                       | An array of strings. A list of aliases for the command to execute.            |
-| url                                                           | Search URL. `{{ word }}` inserts the contents of the `word` argument.         |
-| browser                                                       | specify a browser name. See details for [provider.browser](#provider.browser) |
+| key                                                           | description                                                           |
+|---------------------------------------------------------------|-----------------------------------------------------------------------|
+| name                                                          | Provider Name. This is the name of the command execution.             |
+| aliases                                                       | An array of strings. A list of aliases for the command to execute.    |
+| url                                                           | Search URL. `{{ word }}` inserts the contents of the `word` argument. |
+| browser                                                       | specify a browser name(path)                                          |
 
 URLs are parsed using [`tera`](https://github.com/Keats/tera).                                                                             
-
-### provider.browser
-
-| key            | description                                          |
-|----------------|------------------------------------------------------|
-| default        | Use the OS default browser.                          |
-| default_config | Use the default configuration browser.               |
-| other          | Any browser name. e.g) `chrome`, `msedge`, `firefox` |
-
-## default
-
-example:
-
-```yaml
-version: "v1.0"
-providers:
-  ...
-default:
-  browser: chrome
-```
-
-`default` key is optional key.
-
-| key     | description                                                      |
-|---------|------------------------------------------------------------------|
-| browser | specify a default browser. if not specified, OS default browser. |
 
 # License
 
