@@ -73,6 +73,12 @@ pub fn completion(cmd: cli::CommandCompletion, _config: Config) -> anyhow::Resul
     Ok(())
 }
 
+pub fn jsonschema(_config: Config) -> anyhow::Result<()> {
+    let schema = schemars::schema_for!(config::Config);
+    println!("{}", serde_json::to_string_pretty(&schema).unwrap());
+    Ok(())
+}
+
 pub fn external(cmd: Vec<String>, config: Config) -> anyhow::Result<()> {
     if cmd.is_empty() || cmd.len() > 2 {
         eprintln!("Usage: search [PROVIDER] WORD");

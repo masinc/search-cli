@@ -66,6 +66,14 @@ An array of [`provider`](#provider)
 
 URLs are parsed using [`tera`](https://github.com/Keats/tera).                                                                             
 
+# JSON Schema
+
+The following command outputs JSON Schema.
+
+```
+search jsonschema
+```
+
 # License
 
 Mit or Apache-2.0

@@ -51,6 +51,7 @@ fn main() -> Result<()> {
         SubCommand::Config(cmd) => exec::config(cmd, config)?,
         SubCommand::Open(cmd) => exec::open(cmd, config)?,
         SubCommand::Completion(cmd) => exec::completion(cmd, config)?,
+        SubCommand::Jsonschema => exec::jsonschema(config)?,
         SubCommand::List(cmd) => exec::list(cmd, config)?,
         SubCommand::External(v) => exec::external(v, config)?,
     };

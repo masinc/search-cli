@@ -23,6 +23,7 @@ pub enum SubCommand {
     List(CommandList),
     Open(CommandOpen),
     Completion(CommandCompletion),
+    Jsonschema,
     #[clap(external_subcommand)]
     External(Vec<String>),
 }

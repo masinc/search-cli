@@ -1,6 +1,6 @@
 use std::path::PathBuf;
-
 use serde::{Deserialize, Serialize};
+use schemars::JsonSchema;
 
 pub const CONFIG_FILE: &str = "config.yaml";
 
@@ -37,13 +37,13 @@ providers:
     serde_yaml::from_str(yaml)
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone)]
+#[derive(JsonSchema, Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone)]
 pub struct Config {
     pub version: String,
     pub providers: Vec<Provider>,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone, Default)]
+#[derive(JsonSchema, Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone, Default)]
 pub struct Provider {
     /// The name of the provider
     pub name: String,
