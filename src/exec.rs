@@ -1,4 +1,7 @@
-use std::io;
+use std::{
+    cell::RefCell,
+    io::{self, prelude::*},
+};
 
 use crate::{
     cli::{self, Cli},
@@ -7,32 +10,42 @@ use crate::{
 use anyhow::Result;
 use tera::Tera;
 
-fn replace_url(url: &str, word: &str) -> Result<String> {
-    let mut tera = Tera::default();
-    tera.add_raw_template("url", url)?;
-
-    let mut ctx = ::tera::Context::new();
-    ctx.insert("word", word);
-
-    Ok(tera.render("url", &ctx)?)
-}
-
 pub trait Executable {
     type Command;
-    fn exec(cmd: &Self::Command, config: &Config) -> Result<()>;
+    fn exec(&self, cmd: &Self::Command, config: &Config) -> Result<()>;
 }
 
-pub struct ConfigExec;
+pub struct ConfigExec<Writer> {
+    stdout: RefCell<Writer>,
+}
 
-impl Executable for ConfigExec {
+impl<Writer> Executable for ConfigExec<Writer>
+where
+    Writer: Write,
+{
     type Command = cli::CommandConfig;
 
-    fn exec(cmd: &Self::Command, _config: &Config) -> Result<()> {
+    fn exec(&self, cmd: &Self::Command, _config: &Config) -> Result<()> {
+        let mut stdout = self.stdout.borrow_mut();
         if cmd.path {
-            println!("{}", config::config_path().to_str().unwrap());
+            write!(stdout, "{}", config::config_path().to_str().unwrap())?;
         }
 
         Ok(())
+    }
+}
+
+impl ConfigExec<io::Stdout> {
+    pub fn new() -> Self {
+        Self {
+            stdout: RefCell::new(io::stdout()),
+        }
+    }
+}
+
+impl Default for ConfigExec<io::Stdout> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -41,7 +54,7 @@ pub struct OpenExec;
 impl Executable for OpenExec {
     type Command = cli::CommandOpen;
 
-    fn exec(cmd: &Self::Command, config: &Config) -> Result<()> {
+    fn exec(&self, cmd: &Self::Command, config: &Config) -> Result<()> {
         if config.providers.is_empty() {
             panic!("Providers is not found.")
         }
@@ -58,7 +71,7 @@ impl Executable for OpenExec {
             None => &config.providers[0],
         };
 
-        let url = replace_url(&provider.url, &cmd.word)?;
+        let url = Self::replace_url(&provider.url, &cmd.word)?;
 
         match &provider.browser {
             None => open::that(url)?,
@@ -69,48 +82,122 @@ impl Executable for OpenExec {
     }
 }
 
-pub struct CompletionExec;
+impl OpenExec {
+    fn replace_url(url: &str, word: &str) -> Result<String> {
+        let mut tera = Tera::default();
+        tera.add_raw_template("url", url)?;
 
-impl Executable for CompletionExec {
+        let mut ctx = ::tera::Context::new();
+        ctx.insert("word", word);
+
+        Ok(tera.render("url", &ctx)?)
+    }
+}
+
+pub struct CompletionExec<Writer> {
+    stdout: RefCell<Writer>,
+}
+
+impl<Writer> Executable for CompletionExec<Writer>
+where
+    Writer: Write,
+{
     type Command = cli::CommandCompletion;
 
-    fn exec(cmd: &Self::Command, _config: &Config) -> Result<()> {
+    fn exec(&self, cmd: &Self::Command, _config: &Config) -> Result<()> {
         use clap::CommandFactory;
 
-        clap_complete::generate(cmd.shell, &mut Cli::command(), "search", &mut io::stdout());
+        let mut stdout = self.stdout.borrow_mut();
+        clap_complete::generate(cmd.shell, &mut Cli::command(), "search", stdout.by_ref());
 
         Ok(())
     }
 }
 
-pub struct JsonschemaExec;
+impl CompletionExec<io::Stdout> {
+    pub fn new() -> Self {
+        Self {
+            stdout: RefCell::new(io::stdout()),
+        }
+    }
+}
+
+impl Default for CompletionExec<io::Stdout> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+pub struct JsonschemaExec {
+    stdout: RefCell<io::Stdout>,
+}
 
 impl Executable for JsonschemaExec {
     type Command = ();
 
-    fn exec(_cmd: &Self::Command, _config: &Config) -> Result<()> {
+    fn exec(&self, _cmd: &Self::Command, _config: &Config) -> Result<()> {
         let schema = schemars::schema_for!(config::Config);
-        println!("{}", serde_json::to_string_pretty(&schema).unwrap());
+        let mut stdout = self.stdout.borrow_mut();
+        write!(stdout, "{}", serde_json::to_string_pretty(&schema).unwrap())?;
         Ok(())
     }
 }
 
-pub struct ListExec;
+impl JsonschemaExec {
+    pub fn new() -> Self {
+        Self {
+            stdout: RefCell::new(io::stdout()),
+        }
+    }
+}
 
-impl Executable for ListExec {
+impl Default for JsonschemaExec {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+pub struct ListExec<Writer> {
+    stdout: RefCell<Writer>,
+}
+
+impl<Writer> Executable for ListExec<Writer>
+where
+    Writer: Write,
+{
     type Command = cli::CommandList;
 
-    fn exec(cmd: &Self::Command, config: &Config) -> Result<()> {
+    fn exec(&self, cmd: &Self::Command, config: &Config) -> Result<()> {
+        let mut stdout = self.stdout.borrow_mut();
         for provider in &config.providers {
             if cmd.verbose {
                 let aliases = provider.aliases.clone().unwrap_or_default();
-                println!("{:20} alias: [{}]", provider.name, aliases.join(", "));
+                writeln!(
+                    stdout,
+                    "{:20} alias: [{}]",
+                    provider.name,
+                    aliases.join(", ")
+                )?;
             } else {
-                println!("{}", provider.name);
+                writeln!(stdout, "{}", provider.name)?;
             }
         }
 
         Ok(())
+    }
+}
+
+impl ListExec<io::Stdout> {
+    pub fn new() -> Self {
+        Self {
+            stdout: RefCell::new(io::stdout()),
+        }
+    }
+}
+
+impl Default for ListExec<io::Stdout> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -119,13 +206,13 @@ pub struct ExternalExec;
 impl Executable for ExternalExec {
     type Command = Vec<String>;
 
-    fn exec(cmd: &Self::Command, _config: &Config) -> Result<()> {
+    fn exec(&self, cmd: &Self::Command, config: &Config) -> Result<()> {
         if cmd.is_empty() || cmd.len() > 2 {
             eprintln!("Usage: search [PROVIDER] WORD");
             std::process::exit(1);
         }
 
-        if cmd.len() == 1 {
+        let open_cmd = if cmd.len() == 1 {
             cli::CommandOpen {
                 provider: None,
                 word: cmd[0].clone(),
@@ -139,26 +226,155 @@ impl Executable for ExternalExec {
             unreachable!()
         };
 
+        OpenExec.exec(&open_cmd, config)?;
+
         Ok(())
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::io::Cursor;
+
     use super::*;
 
     #[test]
-    fn test_replace_url() {
+    fn test_config_exec() -> Result<()> {
+        let cmd = cli::CommandConfig { path: true };
+        let config = Config {
+            version: "v1.0".to_string(),
+            providers: vec![],
+        };
+
+        let stdout = Cursor::new(vec![]);
+        let config_exec = ConfigExec {
+            stdout: RefCell::new(stdout),
+        };
+
+        config_exec.exec(&cmd, &config)?;
+
+        let stdout = config_exec.stdout.into_inner();
+        assert_eq!(
+            String::from_utf8(stdout.into_inner()).unwrap(),
+            config::config_path().to_str().unwrap()
+        );
+
+        Ok(())
+    }
+    #[test]
+    fn test_open_exec_replace_url() {
         let search_url = "https://google.com/search?q={{ word | urlencode }}";
 
         assert_eq!(
-            replace_url(search_url, "aaa").unwrap(),
+            OpenExec::replace_url(search_url, "aaa").unwrap(),
             "https://google.com/search?q=aaa".to_string()
         );
 
         assert_eq!(
-            replace_url(search_url, "aaa bbb").unwrap(),
+            OpenExec::replace_url(search_url, "aaa bbb").unwrap(),
             "https://google.com/search?q=aaa%20bbb".to_string()
         )
+    }
+
+    #[test]
+    fn test_jsonschema_exec() -> Result<()> {
+        JsonschemaExec::default().exec(&(), &config::default_config_file()?)?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_list_exec() -> Result<()> {
+        let cmd = cli::CommandList { verbose: false };
+        let config = Config {
+            version: "v1.0".to_string(),
+            providers: vec![
+                config::Provider {
+                    name: "google".to_string(),
+                    aliases: Some(vec!["g".to_string()]),
+                    url: "https://google.com/search?q={{ word | urlencode }}".to_string(),
+                    browser: None,
+                },
+                config::Provider {
+                    name: "bing".to_string(),
+                    aliases: None,
+                    url: "https://www.bing.com/search?q={{ word | urlencode }}".to_string(),
+                    browser: None,
+                },
+                config::Provider {
+                    name: "duckduckgo".to_string(),
+                    aliases: Some(vec!["d".to_string()]),
+                    url: "https://duckduckgo.com/?q={{ word | urlencode }}".to_string(),
+                    browser: None,
+                },
+            ],
+        };
+
+        let stdout = Cursor::new(vec![]);
+        let list_exec = ListExec {
+            stdout: RefCell::new(stdout),
+        };
+
+        list_exec.exec(&cmd, &config)?;
+
+        let stdout = list_exec.stdout.into_inner();
+        assert_eq!(
+            String::from_utf8(stdout.into_inner()).unwrap(),
+            "google\nbing\nduckduckgo\n"
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_list_exec_verbose() -> Result<()> {
+        let cmd = cli::CommandList { verbose: true };
+        let config = Config {
+            version: "v1.0".to_string(),
+            providers: vec![
+                config::Provider {
+                    name: "google".to_string(),
+                    aliases: Some(vec!["g".to_string()]),
+                    url: "https://google.com/search?q={{ word | urlencode }}".to_string(),
+                    browser: None,
+                },
+                config::Provider {
+                    name: "bing".to_string(),
+                    aliases: None,
+                    url: "https://www.bing.com/search?q={{ word | urlencode }}".to_string(),
+                    browser: None,
+                },
+                config::Provider {
+                    name: "duckduckgo".to_string(),
+                    aliases: Some(vec!["d".to_string()]),
+                    url: "https://duckduckgo.com/?q={{ word | urlencode }}".to_string(),
+                    browser: None,
+                },
+            ],
+        };
+
+        let stdout = Cursor::new(vec![]);
+        let list_exec = ListExec {
+            stdout: RefCell::new(stdout),
+        };
+
+        list_exec.exec(&cmd, &config)?;
+
+        let stdout = list_exec.stdout.into_inner();
+
+        let str = String::from_utf8(stdout.into_inner()).unwrap();
+        let lines = str.lines().collect::<Vec<_>>();
+
+        assert_eq!(lines.len(), 3);
+        assert!(regex::Regex::new(r"google\s+alias: \[g\]")
+            .unwrap()
+            .is_match(lines[0]));
+        assert!(regex::Regex::new(r"bing\s+alias: \[\]")
+            .unwrap()
+            .is_match(lines[1]));
+        assert!(regex::Regex::new(r"duckduckgo\s+alias: \[d\]")
+            .unwrap()
+            .is_match(lines[2]));
+
+        Ok(())
     }
 }

@@ -31,3 +31,6 @@ features = ["derive"]
 [dependencies.serde]
 version = "1"
 features = ["derive"]
+
+[dev-dependencies]
+regex = "1"

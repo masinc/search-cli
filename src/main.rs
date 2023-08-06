@@ -51,12 +51,12 @@ fn main() -> Result<()> {
     let config = load_config_file()?;
 
     match cli.subcommand {
-        SubCommand::Config(cmd) => ConfigExec::exec(&cmd, &config)?,
-        SubCommand::Open(cmd) => OpenExec::exec(&cmd, &config)?,
-        SubCommand::Completion(cmd) => CompletionExec::exec(&cmd, &config)?,
-        SubCommand::Jsonschema => JsonschemaExec::exec(&(), &config)?,
-        SubCommand::List(cmd) => ListExec::exec(&cmd, &config)?,
-        SubCommand::External(v) => ExternalExec::exec(&v, &config)?,
+        SubCommand::Config(cmd) => ConfigExec::default().exec(&cmd, &config)?,
+        SubCommand::Open(cmd) => OpenExec.exec(&cmd, &config)?,
+        SubCommand::Completion(cmd) => CompletionExec::default().exec(&cmd, &config)?,
+        SubCommand::Jsonschema => JsonschemaExec::default().exec(&(), &config)?,
+        SubCommand::List(cmd) => ListExec::default().exec(&cmd, &config)?,
+        SubCommand::External(v) => ExternalExec.exec(&v, &config)?,
     };
 
     Ok(())

@@ -833,6 +833,7 @@ dependencies = [
  "clap_complete",
  "dirs",
  "open",
+ "regex",
  "schemars",
  "serde",
  "serde_json",
