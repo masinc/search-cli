@@ -6,6 +6,9 @@ use anyhow::Result;
 use clap::Parser;
 use cli::{Cli, SubCommand};
 use config::Config;
+use exec::{
+    CompletionExec, ConfigExec, Executable, ExternalExec, JsonschemaExec, ListExec, OpenExec,
+};
 use std::fs::{self, DirBuilder};
 use std::io::{BufReader, BufWriter};
 
@@ -48,12 +51,12 @@ fn main() -> Result<()> {
     let config = load_config_file()?;
 
     match cli.subcommand {
-        SubCommand::Config(cmd) => exec::config(cmd, config)?,
-        SubCommand::Open(cmd) => exec::open(cmd, config)?,
-        SubCommand::Completion(cmd) => exec::completion(cmd, config)?,
-        SubCommand::Jsonschema => exec::jsonschema(config)?,
-        SubCommand::List(cmd) => exec::list(cmd, config)?,
-        SubCommand::External(v) => exec::external(v, config)?,
+        SubCommand::Config(cmd) => ConfigExec::exec(&cmd, &config)?,
+        SubCommand::Open(cmd) => OpenExec::exec(&cmd, &config)?,
+        SubCommand::Completion(cmd) => CompletionExec::exec(&cmd, &config)?,
+        SubCommand::Jsonschema => JsonschemaExec::exec(&(), &config)?,
+        SubCommand::List(cmd) => ListExec::exec(&cmd, &config)?,
+        SubCommand::External(v) => ExternalExec::exec(&v, &config)?,
     };
 
     Ok(())

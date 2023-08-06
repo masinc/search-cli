@@ -17,89 +17,130 @@ fn replace_url(url: &str, word: &str) -> Result<String> {
     Ok(tera.render("url", &ctx)?)
 }
 
-pub fn config(cmd: cli::CommandConfig, _config: Config) -> anyhow::Result<()> {
-    if cmd.path {
-        println!("{}", config::config_path().to_str().unwrap());
-    }
-
-    Ok(())
+pub trait Executable {
+    type Command;
+    fn exec(cmd: &Self::Command, config: &Config) -> Result<()>;
 }
 
-pub fn open(cmd: cli::CommandOpen, config: Config) -> anyhow::Result<()> {
-    if config.providers.is_empty() {
-        panic!("Providers is not found.")
-    }
+pub struct ConfigExec;
 
-    let provider = match cmd.provider {
-        Some(name) => match find_provider(&config.providers, &name) {
-            Some(p) => p,
-            None => {
-                eprintln!("The Provider does not exists: '{name}'");
-                std::process::exit(1);
+impl Executable for ConfigExec {
+    type Command = cli::CommandConfig;
+
+    fn exec(cmd: &Self::Command, _config: &Config) -> Result<()> {
+        if cmd.path {
+            println!("{}", config::config_path().to_str().unwrap());
+        }
+
+        Ok(())
+    }
+}
+
+pub struct OpenExec;
+
+impl Executable for OpenExec {
+    type Command = cli::CommandOpen;
+
+    fn exec(cmd: &Self::Command, config: &Config) -> Result<()> {
+        if config.providers.is_empty() {
+            panic!("Providers is not found.")
+        }
+
+        let provider = match &cmd.provider {
+            Some(name) => match find_provider(&config.providers, name) {
+                Some(p) => p,
+                None => {
+                    eprintln!("The Provider does not exists: '{name}'");
+                    std::process::exit(1);
+                }
+            },
+
+            None => &config.providers[0],
+        };
+
+        let url = replace_url(&provider.url, &cmd.word)?;
+
+        match &provider.browser {
+            None => open::that(url)?,
+            Some(path) => open::with(url, path)?,
+        }
+
+        Ok(())
+    }
+}
+
+pub struct CompletionExec;
+
+impl Executable for CompletionExec {
+    type Command = cli::CommandCompletion;
+
+    fn exec(cmd: &Self::Command, _config: &Config) -> Result<()> {
+        use clap::CommandFactory;
+
+        clap_complete::generate(cmd.shell, &mut Cli::command(), "search", &mut io::stdout());
+
+        Ok(())
+    }
+}
+
+pub struct JsonschemaExec;
+
+impl Executable for JsonschemaExec {
+    type Command = ();
+
+    fn exec(_cmd: &Self::Command, _config: &Config) -> Result<()> {
+        let schema = schemars::schema_for!(config::Config);
+        println!("{}", serde_json::to_string_pretty(&schema).unwrap());
+        Ok(())
+    }
+}
+
+pub struct ListExec;
+
+impl Executable for ListExec {
+    type Command = cli::CommandList;
+
+    fn exec(cmd: &Self::Command, config: &Config) -> Result<()> {
+        for provider in &config.providers {
+            if cmd.verbose {
+                let aliases = provider.aliases.clone().unwrap_or_default();
+                println!("{:20} alias: [{}]", provider.name, aliases.join(", "));
+            } else {
+                println!("{}", provider.name);
             }
-        },
+        }
 
-        None => &config.providers[0],
-    };
-
-    let url = replace_url(&provider.url, &cmd.word)?;
-
-    match &provider.browser {
-        None => open::that(url)?,
-        Some(path) => open::with(url, path)?,
+        Ok(())
     }
-
-    Ok(())
 }
 
-pub fn list(cmd: cli::CommandList, config: Config) -> anyhow::Result<()> {
-    for provider in &config.providers {
-        if cmd.verbose {
-            let aliases = provider.aliases.clone().unwrap_or_default();
-            println!("{:20} alias: [{}]", provider.name, aliases.join(", "));
+pub struct ExternalExec;
+
+impl Executable for ExternalExec {
+    type Command = Vec<String>;
+
+    fn exec(cmd: &Self::Command, _config: &Config) -> Result<()> {
+        if cmd.is_empty() || cmd.len() > 2 {
+            eprintln!("Usage: search [PROVIDER] WORD");
+            std::process::exit(1);
+        }
+
+        if cmd.len() == 1 {
+            cli::CommandOpen {
+                provider: None,
+                word: cmd[0].clone(),
+            }
+        } else if cmd.len() == 2 {
+            cli::CommandOpen {
+                provider: Some(cmd[0].clone()),
+                word: cmd[1].clone(),
+            }
         } else {
-            println!("{}", provider.name);
-        }
+            unreachable!()
+        };
+
+        Ok(())
     }
-
-    Ok(())
-}
-
-pub fn completion(cmd: cli::CommandCompletion, _config: Config) -> anyhow::Result<()> {
-    use clap::CommandFactory;
-
-    clap_complete::generate(cmd.shell, &mut Cli::command(), "search", &mut io::stdout());
-
-    Ok(())
-}
-
-pub fn jsonschema(_config: Config) -> anyhow::Result<()> {
-    let schema = schemars::schema_for!(config::Config);
-    println!("{}", serde_json::to_string_pretty(&schema).unwrap());
-    Ok(())
-}
-
-pub fn external(cmd: Vec<String>, config: Config) -> anyhow::Result<()> {
-    if cmd.is_empty() || cmd.len() > 2 {
-        eprintln!("Usage: search [PROVIDER] WORD");
-        std::process::exit(1);
-    }
-
-    let cmd = if cmd.len() == 1 {
-        cli::CommandOpen {
-            provider: None,
-            word: cmd[0].clone(),
-        }
-    } else if cmd.len() == 2 {
-        cli::CommandOpen {
-            provider: Some(cmd[0].clone()),
-            word: cmd[1].clone(),
-        }
-    } else {
-        unreachable!()
-    };
-
-    open(cmd, config)
 }
 
 #[cfg(test)]
