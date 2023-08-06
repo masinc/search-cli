@@ -1,6 +1,6 @@
-use std::path::PathBuf;
-use serde::{Deserialize, Serialize};
 use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 
 pub const CONFIG_FILE: &str = "config.yaml";
 
@@ -55,7 +55,7 @@ pub struct Provider {
     pub browser: Option<String>,
 }
 
-pub fn find_provider<'a, 'b>(providers: &'a [Provider], name: &'b str) -> Option<&'a Provider> {
+pub fn find_provider<'a>(providers: &'a [Provider], name: &str) -> Option<&'a Provider> {
     for provider in providers.iter() {
         if provider.name == name {
             return Some(provider);
