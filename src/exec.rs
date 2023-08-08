@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     cell::RefCell,
     io::{self, prelude::*},
 };
@@ -71,7 +72,15 @@ impl Executable for OpenExec {
             None => &config.providers[0],
         };
 
-        let url = Self::replace_url(&provider.url, &cmd.word)?;
+        let word: Cow<str> = if cmd.word == "-" {
+            let mut buf = String::new();
+            io::stdin().read_to_string(&mut buf)?;
+            Cow::Owned(buf.trim().to_string())
+        } else {
+            Cow::Borrowed(&cmd.word)
+        };
+
+        let url = Self::replace_url(&provider.url, &word)?;
 
         match &provider.browser {
             None => open::that(url)?,
