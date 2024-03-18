@@ -1,4 +1,4 @@
-name: Rust
+name: CI
 
 on:
   push:
@@ -10,7 +10,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  build_and_test:
     strategy:
       matrix:
         os: [ubuntu-22.04, windows-2022]
