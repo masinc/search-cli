@@ -6,10 +6,11 @@ use clap::{Parser, Subcommand};
     propagate_version = true, arg_required_else_help = true,
     after_help = "\
 EXAMPLES:
-    search google searchword
-    search g searchword // alias
+    search google <word> // search word
+    search google - // search word from stdin
+    search g <word> // alias
     search config -p // print config file path
-    search list // list providers    
+    search list // list providers
 "
 )]
 pub struct Cli {
@@ -23,27 +24,30 @@ pub enum SubCommand {
     List(CommandList),
     Open(CommandOpen),
     Completion(CommandCompletion),
+    #[clap(about = "Show config.yaml schema")]
     Jsonschema,
     #[clap(external_subcommand)]
     External(Vec<String>),
 }
 
 #[derive(Parser, Debug)]
-#[clap(arg_required_else_help = true)]
+#[clap(arg_required_else_help = true, about = "Configuration")]
 pub struct CommandConfig {
     /// If specified, outputs the config file path.
-    #[clap(long, short)]
+    #[clap(long, short, help = "Print config file path")]
     pub path: bool,
 }
 
 #[derive(Parser, Debug)]
+#[clap(about = "List search providers")]
 pub struct CommandList {
+    /// Verbose mode
     #[clap(long, short)]
     pub verbose: bool,
 }
 
 #[derive(Parser, Debug)]
-#[clap(arg_required_else_help = true)]
+#[clap(arg_required_else_help = true, about = "Search words")]
 pub struct CommandOpen {
     /// Specify a search provider.
     #[clap(long, short)]
@@ -56,6 +60,7 @@ pub struct CommandOpen {
 #[derive(Parser, Debug)]
 #[clap(
     arg_required_else_help = true,
+    about = "Generate completion scripts",
     after_help = "\
 EXAMPLES:
     search completion bash
